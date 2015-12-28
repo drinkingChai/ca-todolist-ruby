@@ -10,13 +10,13 @@ class Todolist
 
 	def update_task_array
 		@tasks = []
-		File.open(@task_file).each do |item| @tasks.push(item) end
+		File.open(@task_file).each do |item| @tasks.push(item) if item.delete(" ").delete("\n").length != 0 end	#skip if it's a new line
 	end
 
 	def update_file
 		file = File.open(@task_file, "w")
 		File.open(@task_file, "a") do
-			|file| 
+			|file|
 			@tasks.each do |item| file.puts item + "\n" end
 		end
 	end
@@ -30,7 +30,7 @@ class Todolist
 	end
 
 	def view_completed
-		File.open(@@completed_file).each do |line| puts line end
+		File.open(@@completed_file).each do |line| puts line if line.delete(" ").delete("\n").length != 0 end
 	end
 
 	def add(task)
@@ -39,15 +39,23 @@ class Todolist
 	end
 
 	def remove(task_num)
-		task_num_i = task_num.to_i	
-		@tasks.delete_at(task_num_i)
+		if task_num > @tasks.length || task_num < 0
+			puts "task index not found"
+			return
+		end
+		puts @tasks[task_num].delete("\n") + " has been removed"
+		@tasks.delete_at(task_num)
 		update_file
 	end
 
 	def complete(task_num)
-		task_num_i = task_num.to_i
-		File.open(@@completed_file, "a") do |file| file.puts @tasks[task_num_i] end
-		@tasks.delete_at(task_num_i)
+		if task_num > @tasks.length || task_num < 0
+			puts "task index not found"
+			return
+		end
+		File.open(@@completed_file, "a") do |file| file.puts @tasks[task_num] end
+		puts @tasks[task_num].delete("\n") + " has been marked complete"
+		@tasks.delete_at(task_num)
 		update_file
 	end
 end
@@ -81,23 +89,41 @@ loop do
 			puts "we don't got that list"
 		end
 	when "3"
-		if currentlist
-			currentlist.view
-		else 
-			puts "no list open"
+		unless currentlist
+			next
 		end
+		currentlist.view
 	when "4"
+		unless currentlist
+			next
+		end
+		puts "task name?"
 		new_task = gets.chomp
-		currentlist.add(new_task)
-		puts new_task + " has been added"
+		if new_task.delete(" ").delete("\n").length != 0
+			currentlist.add(new_task)
+			puts new_task + " has been added"
+		else
+			puts "task name cannot be blank!"
+		end
 	when "5"
+		unless currentlist
+			next
+		end
 		currentlist.view
-		currentlist.complete(gets.chomp)
+		puts "type the index of what to mark complete"
+		currentlist.complete(gets.chomp.to_i)
 	when "6"
+		unless currentlist
+			next
+		end
 		currentlist.view
-		currentlist.remove(gets.chomp)
+		puts "type the index of what to remove"
+		currentlist.remove(gets.chomp.to_i)
 	when "7"
-		Todolist.view_completed
+		unless currentlist
+			next
+		end
+		currentlist.view_completed
 	when "8"
 		break
 	end
