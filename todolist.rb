@@ -1,7 +1,10 @@
 class Todolist
-	def initialize
-		@task_file = "test_list.txt"
-		@completed_file = "completed_tasks.txt"
+	@@completed_file = "completed_tasks.txt"
+
+	def initialize(filename)
+		@task_file = filename
+		unless File.exists?(filename) 
+			File.open(filename, "w+") end
 		update_task_array
 	end
 
@@ -12,8 +15,9 @@ class Todolist
 
 	def update_file
 		file = File.open(@task_file, "w")
-		@tasks.each do
-			|item| file.write(item)
+		File.open(@task_file, "a") do
+			|file| 
+			@tasks.each do |item| file.puts item + "\n" end
 		end
 	end
 
@@ -26,6 +30,7 @@ class Todolist
 	end
 
 	def view_completed
+		File.open(@@completed_file).each do |line| puts line end
 	end
 
 	def add(task)
@@ -41,39 +46,59 @@ class Todolist
 
 	def complete(task_num)
 		task_num_i = task_num.to_i
-		File.open("completed_tasks.txt", "a") do |file| file.puts @tasks[task_num_i] end
+		File.open(@@completed_file, "a") do |file| file.puts @tasks[task_num_i] end
 		@tasks.delete_at(task_num_i)
 		update_file
 	end
 end
 
-todolist = Todolist.new
+currentlist = false
 
 loop do 
 	puts "
 	watchu wanna do
-	1. View todolist
-	2. Add new task
-	3. Mark task complete
-	4. Remove task
-	5. Exit"
+	1. Create new list
+	2. Open a list
+	3. View todolist
+	4. Add new task
+	5. Mark task complete
+	6. Remove task
+	7. View completed
+	8. Exit"
 
 	option = gets.chomp
 	
 	case option
 	when "1"
-		todolist.view
+		puts "gimme a filename"
+		currentlist = Todolist.new(gets.chomp)
 	when "2"
-		new_task = gets.chomp
-		todolist.add(new_task)
-		puts new_task + " has been added"
+		puts "filename?"
+		name = gets.chomp
+		if File.exists?(name)
+			currentlist = Todolist.new(name)
+		else
+			puts "we don't got that list"
+		end
 	when "3"
-		todolist.view
-		todolist.complete(gets.chomp)
+		if currentlist
+			currentlist.view
+		else 
+			puts "no list open"
+		end
 	when "4"
-		todolist.view
-		todolist.remove(gets.chomp)
+		new_task = gets.chomp
+		currentlist.add(new_task)
+		puts new_task + " has been added"
 	when "5"
+		currentlist.view
+		currentlist.complete(gets.chomp)
+	when "6"
+		currentlist.view
+		currentlist.remove(gets.chomp)
+	when "7"
+		Todolist.view_completed
+	when "8"
 		break
 	end
 end
