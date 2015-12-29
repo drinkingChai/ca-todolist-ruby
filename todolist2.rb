@@ -1,14 +1,19 @@
 class List
-	def initialize(filename)
-		@filename = filename
+	def initialize(task_filename, complete_filename)
+		@task_filename = task_filename
+		@complete_filename = complete_filename
 		@all_tasks = []
-		File.open(@filename).each do |line|
-			add_task(Task.new(line))
+		@complete_tasks = []
+		File.open(@task_filename).each do |line|
+			add_task(Task.new(line), @all_tasks)
+		end
+		File.open(@complete_filename).each do |line|
+			add_task(Task.new(line), @complete_tasks)
 		end
 	end
 
-	def add_task(tasks)
-		@all_tasks << tasks
+	def add_task(tasks, list)
+		list << tasks
 	end
 
 	def complete_task(description)
@@ -21,12 +26,21 @@ class List
 		end
 	end
 
+	def update_task(cur_description, new_description)
+		cur_description += "\n"
+		@all_tasks.each do |list_item|
+			if list_item.description == (cur_description)
+				list_item.update_description(new_description)
+			end
+		end
+	end
+
 	def show_all_tasks
 		@all_tasks
 	end
 
 	def save
-		list_file = File.open(@filename, "w")
+		list_file = File.open(@task_filename, "w")
 		@all_tasks.each do |list_item|
 			list_file.puts list_item.description
 		end
@@ -38,12 +52,16 @@ class Task
 	def initialize(description)
 		@description = description
 	end
+
+	def update_description(new_description)
+		@description = new_description
+	end
 end
 
 command, * task_description = ARGV #take a command and task description as input to running the ruby file
 task_string = task_description.join(" ")	#join the task description by space to create task string
 
-first_list = List.new("test_list.txt")
+first_list = List.new("test_list.txt", "complete_list.txt")
 
 case command
 when "add"
@@ -53,6 +71,11 @@ when "add"
 when "complete"
 	first_list.complete_task(task_string)
 	first_list.save
+when "update"
+	print "Enter new description: "
+	first_list.update_task(task_string, STDIN.gets.chomp)
+	first_list.save
+when "delete"
 when "print"
 	first_list.show_all_tasks.each do |list_item|
 		puts list_item.description
