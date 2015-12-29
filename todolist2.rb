@@ -5,18 +5,28 @@ class List
 		@all_tasks = []
 		@complete_tasks = []
 		File.open(@task_filename).each do |line|
-			add_task(Task.new(line), @all_tasks)
+			@all_tasks << Task.new(line)
 		end
 		File.open(@complete_filename).each do |line|
-			add_task(Task.new(line), @complete_tasks)
+			@complete_tasks << Task.new(line)
 		end
 	end
 
-	def add_task(tasks, list)
-		list << tasks
+	def add_task(task)
+		@all_tasks << task
 	end
 
 	def complete_task(description)
+		description += "\n"
+		@all_tasks.each do |list_item|
+			if list_item.description == (description)
+				@complete_tasks.push(@all_tasks.delete_at(@all_tasks.index(list_item)))
+				return
+			end
+		end
+	end
+
+	def delete_task(description)
 		description += "\n"
 		@all_tasks.each do |list_item|
 			if list_item.description == (description)
@@ -36,14 +46,17 @@ class List
 	end
 
 	def show_all_tasks
-		@all_tasks
+		puts "== active =="
+		@all_tasks.each do |list_item| puts list_item.description end
+		puts "== complete =="
+		@complete_tasks.each do |list_item| puts list_item.description end
 	end
 
 	def save
 		list_file = File.open(@task_filename, "w")
-		@all_tasks.each do |list_item|
-			list_file.puts list_item.description
-		end
+		complete_file = File.open(@complete_filename, "w")
+		@all_tasks.each do |list_item| list_file.puts list_item.description	end
+		@complete_tasks.each do |list_item| complete_file.puts list_item.description end
 	end
 end
 
@@ -73,11 +86,16 @@ when "complete"
 	first_list.save
 when "update"
 	print "Enter new description: "
-	first_list.update_task(task_string, STDIN.gets.chomp)
+	new_description = STDIN.gets.chomp
+	unless new_description.length < 0
+		first_list.update_task(task_string, STDIN.gets.chomp)
+	else
+		puts "Task name cannot be empty"
+	end
 	first_list.save
 when "delete"
+	first_list.delete_task(task_string)
+	first_list.save
 when "print"
-	first_list.show_all_tasks.each do |list_item|
-		puts list_item.description
-	end
+	first_list.show_all_tasks
 end
